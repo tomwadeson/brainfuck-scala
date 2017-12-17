@@ -7,7 +7,13 @@ lazy val root = (project in file(".")).
     )),
     name := "brainfuck-scala",
 
-    libraryDependencies ++= Seq(),
+    libraryDependencies ++= Seq(
+      "org.tpolecat" %% "atto-core" % "0.6.1-M7",
+      "org.scalatest"  %% "scalatest"  % "3.0.1"  % Test,
+      "org.scalacheck" %% "scalacheck" % "1.13.4" % Test
+    ),
+
+    doctestTestFramework := DoctestTestFramework.ScalaTest,
 
     scalacOptions ++= Seq(
       "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -55,5 +61,7 @@ lazy val root = (project in file(".")).
       "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
       "-Ywarn-unused:privates",            // Warn if a private member is unused.
       "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
-    )
+    ),
+
+    scalacOptions in Test --= Seq("-Ywarn-unused:params")
   )
