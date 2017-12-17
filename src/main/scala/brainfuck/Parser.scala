@@ -39,7 +39,7 @@ object Parser {
     outputValueAtPointer,
     readAndSetValueAtPointer,
     doWhileValueAtPointerNonZero
-  ).map(skipOthers ~> _).reduce(_ | _)
+  ).reduce(_ | _)
 
-  private lazy val program = skipOthers ~> many(instruction) -| Program
+  private lazy val program = skipOthers ~> many(instruction <~ skipOthers) -| Program
 }
