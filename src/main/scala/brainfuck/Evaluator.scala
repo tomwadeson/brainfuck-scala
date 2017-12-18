@@ -3,6 +3,8 @@ package brainfuck
 import brainfuck.Instruction._
 import brainfuck.Machine.{Pointer, Register}
 import cats.Monad
+import cats.data.StateT
+import cats.effect.IO
 import cats.implicits._
 import cats.mtl.MonadState
 
@@ -87,4 +89,9 @@ trait Console[F[_]] {
 
 object Console {
   def apply[F[_]: Console]: Console[F] = implicitly
+
+  implicit val brainfuckConsole: Console[Brainfuck] = new Console[Brainfuck] {
+    override def writeChar(char: Char): Brainfuck[Unit] = StateT.lift(IO(print(char)))
+    override def readByte(): Brainfuck[Byte]            = StateT.lift(IO(io.StdIn.readByte()))
+  }
 }

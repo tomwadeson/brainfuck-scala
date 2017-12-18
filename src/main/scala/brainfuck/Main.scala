@@ -1,5 +1,7 @@
 package brainfuck
 
+import cats.mtl.implicits._
+
 object Main extends App {
 
   val program =
@@ -49,5 +51,5 @@ object Main extends App {
       |>++.                    And finally a newline from Cell #6
     """.stripMargin
 
-  Evaluator.evaluate[Brainfuck](Parser.parse(program).right.get).run.run(Machine.sized(20)).unsafeRunSync()
+  Evaluator.evaluate[Brainfuck](Parser.parse(program).right.get).run(Machine.sized(20)).unsafeRunSync()
 }
