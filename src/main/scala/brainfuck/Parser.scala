@@ -20,18 +20,15 @@ object Parser {
     */
   def parse(str: String): Either[String, Program] = program.parseOnly(str).either
 
-  private val incrementPointer: Parser[Instruction]         = char('>') >| IncrementPointer
-  private val decrementPointer: Parser[Instruction]         = char('<') >| DecrementPointer
-  private val incrementValueAtPointer: Parser[Instruction]  = char('+') >| IncrementValueAtPointer
-  private val decrementValueAtPointer: Parser[Instruction]  = char('-') >| DecrementValueAtPointer
-  private val outputValueAtPointer: Parser[Instruction]     = char('.') >| OutputValueAtPointer
-  private val readAndSetValueAtPointer: Parser[Instruction] = char(',') >| ReadAndSetValueAtPointer
-  private val doWhileValueAtPointerNonZero
-    : Parser[Instruction] = squareBrackets(program) -| DoWhileValueAtPointerNonZero
+  val incrementPointer: Parser[Instruction]             = char('>') >| IncrementPointer
+  val decrementPointer: Parser[Instruction]             = char('<') >| DecrementPointer
+  val incrementValueAtPointer: Parser[Instruction]      = char('+') >| IncrementValueAtPointer
+  val decrementValueAtPointer: Parser[Instruction]      = char('-') >| DecrementValueAtPointer
+  val outputValueAtPointer: Parser[Instruction]         = char('.') >| OutputValueAtPointer
+  val readAndSetValueAtPointer: Parser[Instruction]     = char(',') >| ReadAndSetValueAtPointer
+  val doWhileValueAtPointerNonZero: Parser[Instruction] = squareBrackets(program) -| DoWhileValueAtPointerNonZero
 
-  private val skipOthers = skipMany(noneOf("><+-.,[]"))
-
-  private val instruction = List(
+  val instruction: Parser[Instruction] = choice(
     incrementPointer,
     decrementPointer,
     incrementValueAtPointer,
@@ -39,7 +36,8 @@ object Parser {
     outputValueAtPointer,
     readAndSetValueAtPointer,
     doWhileValueAtPointerNonZero
-  ).reduce(_ | _)
+  )
 
-  private lazy val program = skipOthers ~> many(instruction <~ skipOthers) -| Program
+  private val skipOthers            = skipMany(noneOf("><+-.,[]"))
+  lazy val program: Parser[Program] = ((many(skipOthers ~> instruction) <~ skipOthers) -| Program).named("Program")
 }
