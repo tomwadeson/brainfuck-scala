@@ -35,7 +35,7 @@ object Evaluator {
 
     def updateRegisterAtPointer(f: Register => Register) =
       MonadState.modify[F, Machine](m => {
-        val v = f(m.registerAtPointer)
+        val v = f(m.currentRegister)
         m.copy(registers = m.registers.updated(m.pointer.value, v))
       })
 
@@ -45,7 +45,7 @@ object Evaluator {
         _ <- Console[F].writeChar(r.value.toChar)
       } yield ()
 
-    def getRegisterAtPointer() = MonadState.get[F, Machine].map(_.registerAtPointer)
+    def getRegisterAtPointer() = MonadState.get[F, Machine].map(_.currentRegister)
 
     def readAndSetValueAtPointer() =
       for {
@@ -63,7 +63,7 @@ object Evaluator {
 }
 
 final case class Machine(registers: Vector[Register], pointer: Pointer) {
-  val registerAtPointer: Register = registers(pointer.value)
+  def currentRegister: Register = registers(pointer.value)
 }
 
 object Machine {
