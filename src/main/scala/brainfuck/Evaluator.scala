@@ -68,15 +68,15 @@ final case class Machine(registers: Vector[Register], pointer: Pointer) {
 
 object Machine {
 
-  final case class Register(value: Byte) {
+  final case class Register(value: Byte) extends AnyVal {
     def char: Char          = value.toChar
-    def increment: Register = Register((value + 1).toByte)
-    def decrement: Register = Register((value - 1).toByte)
+    def increment: Register = copy(value = (value + 1).toByte)
+    def decrement: Register = copy(value = (value - 1).toByte)
   }
 
-  final case class Pointer(value: Int) {
-    def increment: Pointer = Pointer(value + 1)
-    def decrement: Pointer = Pointer(value - 1)
+  final case class Pointer(value: Int) extends AnyVal {
+    def increment: Pointer = copy(value = value + 1)
+    def decrement: Pointer = copy(value = value - 1)
   }
 
   def sized(size: Int): Machine = Machine(Vector.fill(size)(Register(0)), Pointer(0))
