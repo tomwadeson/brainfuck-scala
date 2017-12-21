@@ -12,7 +12,7 @@ class EvaluatorSpec extends FunSuite with Matchers {
     val (consoleState, _) =
       Evaluator.evaluate[BrainfuckTest](program).run(Machine.sized(10)).run(ConsoleState.initial).value
 
-    consoleState.stdOut.mkString shouldBe "Hello World!\n"
+    consoleState.stdOut.map(_.toChar).mkString shouldBe "Hello World!\n"
   }
 
   private val helloWorldSource =
@@ -74,12 +74,12 @@ class EvaluatorSpec extends FunSuite with Matchers {
           State.set[ConsoleState](s.copy(stdIn = NonEmptyList.fromList(bs.tail).getOrElse(bs))))
       } yield bs.head
 
-    override def writeChar(char: Char): BrainfuckTest[Unit] =
-      StateT.lift(State.modify[ConsoleState](s => s.copy(stdOut = s.stdOut :+ char)))
+    override def writeByte(byte: Byte): BrainfuckTest[Unit] =
+      StateT.lift(State.modify[ConsoleState](s => s.copy(stdOut = s.stdOut :+ byte)))
   }
 }
 
-final case class ConsoleState(stdIn: NonEmptyList[Byte], stdOut: List[Char])
+final case class ConsoleState(stdIn: NonEmptyList[Byte], stdOut: List[Byte])
 
 object ConsoleState {
   val initial: ConsoleState = ConsoleState(NonEmptyList(0, Nil), Nil)

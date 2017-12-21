@@ -42,7 +42,7 @@ object Evaluator {
     def outputValueAtPointer() =
       for {
         r <- getRegisterAtPointer()
-        _ <- Console[F].writeChar(r.value.toChar)
+        _ <- Console[F].writeByte(r.value)
       } yield ()
 
     def getRegisterAtPointer() = MonadState.get[F, Machine].map(_.currentRegister)
@@ -84,14 +84,14 @@ object Machine {
 
 trait Console[F[_]] {
   def readByte(): F[Byte]
-  def writeChar(char: Char): F[Unit]
+  def writeByte(byte: Byte): F[Unit]
 }
 
 object Console {
   def apply[F[_]: Console]: Console[F] = implicitly
 
   implicit val brainfuckConsole: Console[Brainfuck] = new Console[Brainfuck] {
-    override def writeChar(char: Char): Brainfuck[Unit] = StateT.lift(IO(print(char)))
+    override def writeByte(byte: Byte): Brainfuck[Unit] = StateT.lift(IO(print(byte.toChar)))
     override def readByte(): Brainfuck[Byte]            = StateT.lift(IO(io.StdIn.readByte()))
   }
 }
