@@ -55,7 +55,7 @@ object Evaluator {
 
     def doWhileValueAtPointerNonZero(loop: Program) = {
       val valueAtPointerNonZero = getRegisterAtPointer().map(_.value != 0)
-      Monad[F].whileM_(valueAtPointerNonZero)(loop.value.traverse_(eval))
+      Monad[F].whileM_(valueAtPointerNonZero)(evaluate[F](loop))
     }
 
     program.value.traverse_(eval)
