@@ -13,13 +13,13 @@ object Evaluator {
   def evaluate[F[_]: Monad: MonadState[?[_], Machine]: Console](program: Program): F[Unit] = {
 
     def eval(i: Instruction): F[Unit] = i match {
-      case IncrementPointer                   => incrementPointer()
-      case DecrementPointer                   => decrementPointer()
-      case IncrementValueAtPointer            => incrementValueAtPointer()
-      case DecrementValueAtPointer            => decrementValueAtPointer()
-      case OutputValueAtPointer               => outputValueAtPointer()
-      case ReadAndSetValueAtPointer           => readAndSetValueAtPointer()
-      case DoWhileValueAtPointerNonZero(loop) => doWhileValueAtPointerNonZero(loop)
+      case IncrementPointer                    => incrementPointer()
+      case DecrementPointer                    => decrementPointer()
+      case IncrementCurrentRegister            => incrementCurrentRegister()
+      case DecrementCurrentRegister            => decrementCurrentRegister()
+      case OutputCurrentRegister               => outputCurrentRegister()
+      case ReadAndSetCurrentRegister           => readAndSetCurrentRegister()
+      case DoWhileCurrentRegisterNonZero(loop) => doWhileCurrentRegisterNonZero(loop)
     }
 
     def incrementPointer() = updatePointer(_.increment)
@@ -29,33 +29,33 @@ object Evaluator {
     def updatePointer(f: Pointer => Pointer) =
       MonadState.modify[F, Machine](m => m.copy(pointer = f(m.pointer)))
 
-    def incrementValueAtPointer() = updateRegisterAtPointer(_.increment)
+    def incrementCurrentRegister() = updateCurrentRegister(_.increment)
 
-    def decrementValueAtPointer() = updateRegisterAtPointer(_.decrement)
+    def decrementCurrentRegister() = updateCurrentRegister(_.decrement)
 
-    def updateRegisterAtPointer(f: Register => Register) =
+    def updateCurrentRegister(f: Register => Register) =
       MonadState.modify[F, Machine](m => {
         val v = f(m.currentRegister)
         m.copy(registers = m.registers.updated(m.pointer.value, v))
       })
 
-    def outputValueAtPointer() =
+    def outputCurrentRegister() =
       for {
-        r <- getRegisterAtPointer()
+        r <- currentRegister()
         _ <- Console[F].writeByte(r.value)
       } yield ()
 
-    def getRegisterAtPointer() = MonadState.get[F, Machine].map(_.currentRegister)
+    def currentRegister() = MonadState.get[F, Machine].map(_.currentRegister)
 
-    def readAndSetValueAtPointer() =
+    def readAndSetCurrentRegister() =
       for {
         v <- Console[F].readByte()
-        _ <- updateRegisterAtPointer(_ => Register(v))
+        _ <- updateCurrentRegister(_ => Register(v))
       } yield ()
 
-    def doWhileValueAtPointerNonZero(loop: Program) = {
-      val valueAtPointerNonZero = getRegisterAtPointer().map(_.value != 0)
-      Monad[F].whileM_(valueAtPointerNonZero)(evaluate[F](loop))
+    def doWhileCurrentRegisterNonZero(loop: Program) = {
+      val currentRegisterNonZero = currentRegister().map(_.value != 0)
+      Monad[F].whileM_(currentRegisterNonZero)(evaluate[F](loop))
     }
 
     program.value.traverse_(eval)
