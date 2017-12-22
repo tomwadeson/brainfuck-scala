@@ -82,5 +82,5 @@ class EvaluatorSpec extends FunSuite with Matchers {
 final case class ConsoleState(stdIn: NonEmptyList[Byte], stdOut: List[Byte])
 
 object ConsoleState {
-  val initial: ConsoleState = ConsoleState(NonEmptyList(0, Nil), Nil)
+  val initial: ConsoleState = ConsoleState(NonEmptyList.one(0), Nil)
 }
