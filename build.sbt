@@ -10,12 +10,11 @@ lazy val root = (project in file(".")).
     name := "brainfuck-scala",
 
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "1.0.0-RC1",
-      "org.typelevel" %% "cats-mtl-core" % "0.1.0",
-      "org.typelevel" %% "cats-effect" % "0.5",
-      "org.tpolecat" %% "atto-core" % "0.6.1-M7",
+      "org.typelevel" %% "cats-core" % "1.1.0",
+      "org.typelevel" %% "cats-mtl-core" % "0.3.0",
+      "org.typelevel" %% "cats-effect" % "0.10.1",
+      "org.tpolecat" %% "atto-core" % "0.6.2",
       "org.scalatest"  %% "scalatest"  % "3.0.1"  % Test,
-      "org.scalacheck" %% "scalacheck" % "1.13.4" % Test
     ),
 
     doctestTestFramework := DoctestTestFramework.ScalaTest,

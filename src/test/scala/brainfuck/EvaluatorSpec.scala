@@ -68,14 +68,14 @@ class EvaluatorSpec extends FunSuite with Matchers {
   implicit val mockConsoleIO: Console[BrainfuckTest] = new Console[BrainfuckTest] {
     override def readByte(): BrainfuckTest[Byte] =
       for {
-        s <- StateT.lift(State.get[ConsoleState])
+        s <- StateT.liftF(State.get[ConsoleState])
         bs = s.stdIn
-        _ <- StateT.lift[MockConsoleIO, Machine, Unit](
+        _ <- StateT.liftF[MockConsoleIO, Machine, Unit](
           State.set[ConsoleState](s.copy(stdIn = NonEmptyList.fromList(bs.tail).getOrElse(bs))))
       } yield bs.head
 
     override def writeByte(byte: Byte): BrainfuckTest[Unit] =
-      StateT.lift(State.modify[ConsoleState](s => s.copy(stdOut = s.stdOut :+ byte)))
+      StateT.liftF(State.modify[ConsoleState](s => s.copy(stdOut = s.stdOut :+ byte)))
   }
 }
 
