@@ -2,11 +2,11 @@ package brainfuck
 
 import cats.data.{NonEmptyList, State, StateT}
 import cats.mtl.implicits._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{FreeSpec, Matchers}
 
-class EvaluatorSpec extends FunSuite with Matchers {
+class EvaluatorSpec extends FreeSpec with Matchers {
 
-  test("Evaluate a 'Hello World!' Brainfuck program") {
+  "Evaluate a 'Hello World!' Brainfuck program" in {
     val program = Parser.parse(helloWorldSource).right.get
 
     val (consoleState, _) =
