@@ -13,25 +13,17 @@ object Evaluator {
   def evaluate[F[_]: Monad: MonadState[?[_], Machine]: Console](program: Program): F[Unit] = {
 
     def eval(i: Instruction): F[Unit] = i match {
-      case IncrementPointer                    => incrementPointer()
-      case DecrementPointer                    => decrementPointer()
-      case IncrementCurrentRegister            => incrementCurrentRegister()
-      case DecrementCurrentRegister            => decrementCurrentRegister()
+      case IncrementPointer                    => updatePointer(_.increment)
+      case DecrementPointer                    => updatePointer(_.decrement)
+      case IncrementCurrentRegister            => updateCurrentRegister(_.increment)
+      case DecrementCurrentRegister            => updateCurrentRegister(_.decrement)
       case OutputCurrentRegister               => outputCurrentRegister()
       case ReadAndSetCurrentRegister           => readAndSetCurrentRegister()
       case DoWhileCurrentRegisterNonZero(loop) => doWhileCurrentRegisterNonZero(loop)
     }
 
-    def incrementPointer() = updatePointer(_.increment)
-
-    def decrementPointer() = updatePointer(_.decrement)
-
     def updatePointer(f: Pointer => Pointer) =
       MonadState.modify[F, Machine](m => m.copy(pointer = f(m.pointer)))
-
-    def incrementCurrentRegister() = updateCurrentRegister(_.increment)
-
-    def decrementCurrentRegister() = updateCurrentRegister(_.decrement)
 
     def updateCurrentRegister(f: Register => Register) =
       MonadState.modify[F, Machine](m => {
