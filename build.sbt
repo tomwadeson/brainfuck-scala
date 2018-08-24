@@ -1,3 +1,6 @@
+resolvers += Resolver.sonatypeRepo("releases")
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 
 lazy val root = (project in file(".")).
@@ -14,6 +17,7 @@ lazy val root = (project in file(".")).
       "org.typelevel" %% "cats-mtl-core" % "0.3.0",
       "org.typelevel" %% "cats-effect" % "0.10.1",
       "org.tpolecat" %% "atto-core" % "0.6.2",
+      "io.estatico" %% "newtype" % "0.4.2",
       "org.scalatest"  %% "scalatest"  % "3.0.1"  % Test,
     ),
 
