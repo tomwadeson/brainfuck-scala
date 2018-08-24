@@ -17,8 +17,8 @@ object Evaluator {
       case DecrementPointer                    => updatePointer(_.decrement)
       case IncrementCurrentRegister            => updateCurrentRegister(_.increment)
       case DecrementCurrentRegister            => updateCurrentRegister(_.decrement)
-      case OutputCurrentRegister               => outputCurrentRegister()
-      case ReadAndSetCurrentRegister           => readAndSetCurrentRegister()
+      case OutputCurrentRegister               => outputCurrentRegister
+      case ReadAndSetCurrentRegister           => readAndSetCurrentRegister
       case DoWhileCurrentRegisterNonZero(loop) => doWhileCurrentRegisterNonZero(loop)
     }
 
@@ -31,22 +31,22 @@ object Evaluator {
         m.copy(registers = m.registers.updated(m.pointer.value, v))
       })
 
-    def outputCurrentRegister() =
+    def outputCurrentRegister =
       for {
-        r <- currentRegister()
+        r <- currentRegister
         _ <- Console[F].writeByte(r.value)
       } yield ()
 
-    def currentRegister() = MonadState.get[F, Machine].map(_.currentRegister)
+    def currentRegister = MonadState.get[F, Machine].map(_.currentRegister)
 
-    def readAndSetCurrentRegister() =
+    def readAndSetCurrentRegister =
       for {
         v <- Console[F].readByte()
         _ <- updateCurrentRegister(_ => Register(v))
       } yield ()
 
     def doWhileCurrentRegisterNonZero(loop: Program) = {
-      val currentRegisterNonZero = currentRegister().map(_.value != 0)
+      val currentRegisterNonZero = currentRegister.map(_.value != 0)
       Monad[F].whileM_(currentRegisterNonZero)(evaluate[F](loop))
     }
 
