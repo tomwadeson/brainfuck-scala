@@ -2,11 +2,10 @@ package brainfuck
 
 import brainfuck.EvaluatorSpec.BrainfuckTest
 import cats.Monad
-import cats.data.StateT
-import cats.effect.IO
-import cats.mtl.{DefaultMonadState, MonadState}
-import cats.mtl.implicits._
+import cats.data.State
 import cats.implicits._
+import cats.mtl.implicits._
+import cats.mtl.{DefaultMonadState, MonadState}
 import io.estatico.newtype.macros.newtype
 import org.scalatest.{FreeSpec, Matchers}
 
@@ -16,7 +15,7 @@ class EvaluatorSpec extends FreeSpec with Matchers {
     val program = Parser.parse(helloWorldSource).right.get
 
     val ((_, consoleState), _) =
-      Evaluator.evaluate[BrainfuckTest](program).runBrainfuckTest((Machine.sized(10), ConsoleState.initial)).unsafeRunSync()
+      Evaluator.evaluate[BrainfuckTest](program).runBrainfuckTest((Machine.sized(10), ConsoleState.initial))
 
     consoleState.stdOut.map(_.toChar).mkString shouldBe "Hello World!\n"
   }
@@ -72,9 +71,9 @@ class EvaluatorSpec extends FreeSpec with Matchers {
 object EvaluatorSpec {
 
   @newtype
-  final case class BrainfuckTest[A](run: StateT[IO, (Machine, ConsoleState), A]) {
-    def runBrainfuckTest(withInitialState: (Machine, ConsoleState)): IO[((Machine, ConsoleState), A)] =
-      run.run(withInitialState)
+  final case class BrainfuckTest[A](run: State[(Machine, ConsoleState), A]) {
+    def runBrainfuckTest(withInitialState: (Machine, ConsoleState)): ((Machine, ConsoleState), A) =
+      run.run(withInitialState).value
   }
 
   object BrainfuckTest {
