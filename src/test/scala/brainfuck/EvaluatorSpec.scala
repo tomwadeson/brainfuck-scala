@@ -16,7 +16,7 @@ class EvaluatorSpec extends FreeSpec with Matchers {
     val program = Parser.parse(helloWorldSource).right.get
 
     val ((_, consoleState), _) =
-      Evaluator.evaluate[BrainfuckTest](program).run.run((Machine.sized(10), ConsoleState.initial)).unsafeRunSync()
+      Evaluator.evaluate[BrainfuckTest](program).runBrainfuckTest((Machine.sized(10), ConsoleState.initial)).unsafeRunSync()
 
     consoleState.stdOut.map(_.toChar).mkString shouldBe "Hello World!\n"
   }
@@ -72,7 +72,10 @@ class EvaluatorSpec extends FreeSpec with Matchers {
 object EvaluatorSpec {
 
   @newtype
-  final case class BrainfuckTest[A](run: StateT[IO, (Machine, ConsoleState), A])
+  final case class BrainfuckTest[A](run: StateT[IO, (Machine, ConsoleState), A]) {
+    def runBrainfuckTest(withInitialState: (Machine, ConsoleState)): IO[((Machine, ConsoleState), A)] =
+      run.run(withInitialState)
+  }
 
   object BrainfuckTest {
 

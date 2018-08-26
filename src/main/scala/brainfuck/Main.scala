@@ -26,12 +26,16 @@ object Main {
     // A "Brainfuck computation", ready to run on a machine
     val brainfuck = Evaluator.evaluate[Brainfuck](program)
 
-    brainfuck.runBrainfuck.run(machine).unsafeRunSync() // prints "Hello World!"
+    // TODO: Bump `cats-effect` and `.void` this
+    brainfuck.runBrainfuck(machine).unsafeRunSync() // prints "Hello World!"
     ()
   }
 
   @newtype
-  case class Brainfuck[A](runBrainfuck: StateT[IO, Machine, A])
+  final case class Brainfuck[A](run: StateT[IO, Machine, A]) {
+    def runBrainfuck(machine: Machine): IO[(Machine, A)] =
+      run.run(machine)
+  }
 
   object Brainfuck {
 
