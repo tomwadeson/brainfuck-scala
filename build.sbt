@@ -2,6 +2,7 @@ resolvers += Resolver.sonatypeRepo("releases")
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 
 lazy val root = (project in file(".")).
   settings(

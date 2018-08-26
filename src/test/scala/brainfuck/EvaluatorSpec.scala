@@ -1,7 +1,13 @@
 package brainfuck
 
-import cats.data.{NonEmptyList, State, StateT}
+import brainfuck.EvaluatorSpec.BrainfuckTest
+import cats.Monad
+import cats.data.StateT
+import cats.effect.IO
+import cats.mtl.{DefaultMonadState, MonadState}
 import cats.mtl.implicits._
+import cats.implicits._
+import io.estatico.newtype.macros.newtype
 import org.scalatest.{FreeSpec, Matchers}
 
 class EvaluatorSpec extends FreeSpec with Matchers {
@@ -9,8 +15,8 @@ class EvaluatorSpec extends FreeSpec with Matchers {
   "Evaluate a 'Hello World!' Brainfuck program" in {
     val program = Parser.parse(helloWorldSource).right.get
 
-    val (consoleState, _) =
-      Evaluator.evaluate[BrainfuckTest](program).run(Machine.sized(10)).run(ConsoleState.initial).value
+    val ((_, consoleState), _) =
+      Evaluator.evaluate[BrainfuckTest](program).run.run((Machine.sized(10), ConsoleState.initial)).unsafeRunSync()
 
     consoleState.stdOut.map(_.toChar).mkString shouldBe "Hello World!\n"
   }
@@ -61,26 +67,50 @@ class EvaluatorSpec extends FreeSpec with Matchers {
       |>>+.                    Add 1 to Cell #5 gives us an exclamation point
       |>++.                    And finally a newline from Cell #6
     """.stripMargin
+}
 
-  type MockConsoleIO[A] = State[ConsoleState, A]
-  type BrainfuckTest[A] = StateT[MockConsoleIO, Machine, A]
+object EvaluatorSpec {
 
-  implicit val mockConsoleIO: Console[BrainfuckTest] = new Console[BrainfuckTest] {
-    override def readByte(): BrainfuckTest[Byte] =
-      for {
-        s <- StateT.liftF(State.get[ConsoleState])
-        bs = s.stdIn
-        _ <- StateT.liftF[MockConsoleIO, Machine, Unit](
-          State.set[ConsoleState](s.copy(stdIn = NonEmptyList.fromList(bs.tail).getOrElse(bs))))
-      } yield bs.head
+  @newtype
+  final case class BrainfuckTest[A](run: StateT[IO, (Machine, ConsoleState), A])
 
-    override def writeByte(byte: Byte): BrainfuckTest[Unit] =
-      StateT.liftF(State.modify[ConsoleState](s => s.copy(stdOut = s.stdOut :+ byte)))
+  object BrainfuckTest {
+
+    implicit val monad: Monad[BrainfuckTest] = derivingK
+
+    private val monadStateMachineConsole: MonadState[BrainfuckTest, (Machine, ConsoleState)] =
+      derivingK[MonadState[?[_], (Machine, ConsoleState)]]
+
+    implicit val monadStateMachine: MonadState[BrainfuckTest, Machine] =
+      new DefaultMonadState[BrainfuckTest, Machine] {
+        override val monad: Monad[BrainfuckTest] = implicitly
+        override def get: BrainfuckTest[Machine] = monadStateMachineConsole.get.map(_._1)
+        override def set(s: Machine): BrainfuckTest[Unit] =
+          for {
+            (_, consoleState) <- monadStateMachineConsole.get
+            _                 <- monadStateMachineConsole.set((s, consoleState))
+          } yield ()
+      }
+
+    implicit val console: Console[BrainfuckTest] = new Console[BrainfuckTest] {
+
+      override def readByte(): BrainfuckTest[Byte] =
+        for {
+          (machine, consoleState) <- monadStateMachineConsole.get
+          byte = consoleState.stdIn.head
+          _ <- monadStateMachineConsole.set((machine, consoleState.copy(stdIn = consoleState.stdIn.tail)))
+        } yield byte
+
+      override def writeByte(byte: Byte): BrainfuckTest[Unit] =
+        monadStateMachineConsole.modify { case (machine, consoleState) =>
+            (machine, consoleState.copy(stdOut = consoleState.stdOut :+ byte))
+        }
+    }
   }
 }
 
-final case class ConsoleState(stdIn: NonEmptyList[Byte], stdOut: List[Byte])
+final case class ConsoleState(stdIn: List[Byte], stdOut: List[Byte])
 
 object ConsoleState {
-  val initial: ConsoleState = ConsoleState(NonEmptyList.one(0), Nil)
+  val initial: ConsoleState = ConsoleState(Nil, Nil)
 }
