@@ -3,7 +3,6 @@ package brainfuck
 import brainfuck.EvaluatorSpec.BrainfuckTest
 import cats.Monad
 import cats.data.State
-import cats.implicits._
 import cats.mtl.implicits._
 import cats.mtl.{DefaultMonadState, MonadState}
 import io.estatico.newtype.macros.newtype
@@ -80,33 +79,33 @@ object EvaluatorSpec {
 
     implicit val monad: Monad[BrainfuckTest] = derivingK
 
-    private val monadStateMachineConsole: MonadState[BrainfuckTest, (Machine, ConsoleState)] =
-      derivingK[MonadState[?[_], (Machine, ConsoleState)]]
+    implicit val monadStateMachine: MonadState[BrainfuckTest, Machine] = new DefaultMonadState[BrainfuckTest, Machine] {
 
-    implicit val monadStateMachine: MonadState[BrainfuckTest, Machine] =
-      new DefaultMonadState[BrainfuckTest, Machine] {
         override val monad: Monad[BrainfuckTest] = implicitly
-        override def get: BrainfuckTest[Machine] = monadStateMachineConsole.get.map(_._1)
+
+        override def get: BrainfuckTest[Machine] =
+          BrainfuckTest(State.get[(Machine, ConsoleState)].map(_._1))
+
         override def set(s: Machine): BrainfuckTest[Unit] =
-          for {
-            (_, consoleState) <- monadStateMachineConsole.get
-            _                 <- monadStateMachineConsole.set((s, consoleState))
-          } yield ()
+          BrainfuckTest(for {
+            (_, consoleState) <- State.get
+            _                 <- State.set((s, consoleState))
+          } yield ())
       }
 
     implicit val console: Console[BrainfuckTest] = new Console[BrainfuckTest] {
 
       override def readByte(): BrainfuckTest[Byte] =
-        for {
-          (machine, consoleState) <- monadStateMachineConsole.get
+        BrainfuckTest(for {
+          (machine, consoleState) <- State.get[(Machine, ConsoleState)]
           byte = consoleState.stdIn.head
-          _ <- monadStateMachineConsole.set((machine, consoleState.copy(stdIn = consoleState.stdIn.tail)))
-        } yield byte
+          _ <- State.set((machine, consoleState.copy(stdIn = consoleState.stdIn.tail)))
+        } yield byte)
 
       override def writeByte(byte: Byte): BrainfuckTest[Unit] =
-        monadStateMachineConsole.modify { case (machine, consoleState) =>
+        BrainfuckTest(State.modify { case (machine, consoleState) =>
             (machine, consoleState.copy(stdOut = consoleState.stdOut :+ byte))
-        }
+        })
     }
   }
 }
